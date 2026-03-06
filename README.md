@@ -275,3 +275,4 @@ To satisfy the remaining requirements:
 
 This repository focuses on the **MCP backend**; the UI and push infrastructure can be added as separate services that call into the MCP-connected model and this server.
 
+# paper_news

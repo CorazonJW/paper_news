@@ -352,11 +352,15 @@ async function chatCompletion(messages) {
         throw new Error("OpenAI API: no content in response");
     return content;
 }
+const LANGUAGE_NAMES = {
+    en: "English", zh: "Chinese", es: "Spanish", fr: "French", de: "German", ja: "Japanese", ko: "Korean",
+};
 /** Build a structured summary (summary, key points, dataset, methods) for a single paper. */
-async function buildStructuredSummaryWithLLM(focusPaper) {
+async function buildStructuredSummaryWithLLM(focusPaper, language = "en") {
+    const langName = LANGUAGE_NAMES[language] || language;
     const input = `Title: ${focusPaper.title}\nAbstract: ${(focusPaper.abstract || "").slice(0, 2000)}`;
-    const system = "You are a concise science writer. For the given paper, respond with a JSON object only (no markdown) with these keys: " +
-        '"summary" (2 short paragraphs), "keyPoints" (array of 4-6 strings), "dataset" (short description of data used, or "Not specified"), "datasetUrl" (URL to dataset if mentioned, or empty string), "methods" (brief methods description).';
+    const system = `You are a concise science writer. Write everything in ${langName} only. For the given paper, respond with a JSON object only (no markdown) with these keys: ` +
+        '"summary" (2 short paragraphs in ' + langName + '), "keyPoints" (array of 4-6 strings in ' + langName + '), "dataset" (short description in ' + langName + ', or "Not specified"), "datasetUrl" (URL to dataset if mentioned, or empty string), "methods" (brief methods description in ' + langName + ').';
     const user = `Paper:\n\n${input}`;
     const raw = await chatCompletion([{ role: "system", content: system }, { role: "user", content: user }]);
     try {
@@ -372,8 +376,9 @@ async function buildStructuredSummaryWithLLM(focusPaper) {
 /** Build an education-level-specific report from the summary (for the selected level only). */
 async function buildReportWithLLM(summary, educationLevel, language) {
     const level = educationLevel.replace(/_/g, " ");
-    const system = `You write a short daily research report for a reader. Education level: ${level}. Language: ${language}. ` +
-        `Adapt tone and depth: before_high_school = storytelling, simple, concrete; high_school = light technical, analogies; undergraduate = standard explainer; master/doctor = more technical; above_doctor = expert-level, concise. Output in ${language} only.`;
+    const langName = LANGUAGE_NAMES[language] || language;
+    const system = `You write a short daily research report for a reader. Education level: ${level}. ` +
+        `Adapt tone and depth: before_high_school = storytelling, simple, concrete; high_school = light technical, analogies; undergraduate = standard explainer; master/doctor = more technical; above_doctor = expert-level, concise. Write the entire report in ${langName} only.`;
     const user = `Using this summary and key points, write a 1–2 paragraph "today's research" report suited to the ${level} level:\n\n${summary}`;
     return chatCompletion([{ role: "system", content: system }, { role: "user", content: user }]);
 }
@@ -431,7 +436,7 @@ app.post("/ui/generate", async (req, res) => {
         let reportSource = "mock";
         if (focusPaper && OPENAI_API_KEY) {
             try {
-                const llmStructured = await buildStructuredSummaryWithLLM(focusPaper);
+                const llmStructured = await buildStructuredSummaryWithLLM(focusPaper, language ?? "en");
                 if (llmStructured) {
                     structuredSummary = llmStructured;
                     summary = llmStructured.summary + "\n\nKey points:\n" + (llmStructured.keyPoints?.map((k) => "• " + k).join("\n") ?? "");
@@ -465,6 +470,54 @@ app.post("/ui/generate", async (req, res) => {
     catch (err) {
         // eslint-disable-next-line no-console
         console.error("Error in /ui/generate:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+// Summarize a single paper (for "Change paper" on the frontend).
+app.post("/ui/summarize-one", async (req, res) => {
+    try {
+        const { paper, educationLevel, language } = req.body ?? {};
+        if (!paper || typeof paper !== "object" || !paper.id) {
+            res.status(400).json({ error: "paper (object with id, title, abstract, url, etc.) is required." });
+            return;
+        }
+        const level = educationLevel || "undergraduate";
+        const lang = language ?? "en";
+        const p = paper;
+        let structuredSummary = buildMockStructuredSummary(p);
+        let summary = buildMockSummary(p);
+        let report = buildMockReportByLevel(p, level, lang);
+        let summarySource = "mock";
+        let reportSource = "mock";
+        if (OPENAI_API_KEY) {
+            try {
+                const llmStructured = await buildStructuredSummaryWithLLM(p, lang);
+                if (llmStructured) {
+                    structuredSummary = llmStructured;
+                    summary = llmStructured.summary + "\n\nKey points:\n" + (llmStructured.keyPoints?.map((k) => "• " + k).join("\n") ?? "");
+                    summarySource = "llm";
+                    const llmReport = await buildReportWithLLM(summary, level, lang);
+                    if (llmReport) {
+                        report = llmReport;
+                        reportSource = "llm";
+                    }
+                }
+            }
+            catch (err) {
+                console.error("LLM summarize-one failed:", err?.message);
+            }
+        }
+        res.json({
+            focusPaper: p,
+            structuredSummary: structuredSummary ?? undefined,
+            summary: summary || undefined,
+            report: report || undefined,
+            summarySource,
+            reportSource,
+        });
+    }
+    catch (err) {
+        console.error("Error in /ui/summarize-one:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -524,10 +577,10 @@ app.post("/ui/trend", async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-// Q&A about the report; optional terminology/concept links (LLM returns markdown).
+// Q&A about the report and related papers only; optional terminology/concept links (LLM returns markdown).
 app.post("/ui/ask", async (req, res) => {
     try {
-        const { reportContext, question } = req.body ?? {};
+        const { reportContext, relatedPapersContext, question } = req.body ?? {};
         if (!reportContext || !question) {
             res.status(400).json({ error: "reportContext and question required." });
             return;
@@ -536,8 +589,11 @@ app.post("/ui/ask", async (req, res) => {
             res.json({ answer: "Set OPENAI_API_KEY to enable Q&A about the report." });
             return;
         }
-        const system = "You answer questions about a research report. Be concise. When mentioning important terms or concepts, use markdown links when helpful, e.g. [concept](https://en.wikipedia.org/wiki/Concept).";
-        const user = `Report:\n${reportContext}\n\nQuestion: ${question}`;
+        const system = "You answer questions only about the research report and the related papers provided below. " +
+            "If the question is not about this report or those papers, respond briefly: e.g. 'I can only answer questions about the current report and the related papers.' " +
+            "Be concise. When mentioning important terms or concepts, use markdown links when helpful, e.g. [concept](https://en.wikipedia.org/wiki/Concept).";
+        const relatedBlock = relatedPapersContext ? `\n\n${relatedPapersContext}` : "";
+        const user = `Report:\n${reportContext}${relatedBlock}\n\nQuestion: ${question}`;
         const answer = await chatCompletion([{ role: "system", content: system }, { role: "user", content: user }]);
         res.json({ answer: answer || "" });
     }

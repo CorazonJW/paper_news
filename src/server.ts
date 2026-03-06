@@ -7,6 +7,8 @@ const { McpServer } = require(path.join(sdkServerDir, "mcp.js"));
 const { StreamableHTTPServerTransport } = require(path.join(sdkServerDir, "streamableHttp.js"));
 import dayjs from "dayjs";
 import { request } from "undici";
+import webpush from "web-push";
+import cron from "node-cron";
 
 // --------- Domain models ----------
 
@@ -737,6 +739,80 @@ app.post("/ui/ask", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// --------- Daily push notifications ----------
+const pushSubscriptions: Array<{ subscription: webpush.PushSubscription; createdAt: string }> = [];
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || "";
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || "";
+const APP_URL = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "https://paper-story.onrender.com";
+
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails("mailto:support@example.com", VAPID_PUBLIC, VAPID_PRIVATE);
+}
+
+app.get("/api/push-vapid-public", (_req: Request, res: Response) => {
+  if (!VAPID_PUBLIC) {
+    res.status(503).json({ error: "Push notifications not configured. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY." });
+    return;
+  }
+  res.json({ publicKey: VAPID_PUBLIC });
+});
+
+app.post("/api/push-subscribe", (req: Request, res: Response) => {
+  const subscription = req.body?.subscription;
+  if (!subscription || !subscription.endpoint) {
+    res.status(400).json({ error: "subscription object with endpoint required." });
+    return;
+  }
+  const existing = pushSubscriptions.findIndex((s) => s.subscription.endpoint === subscription.endpoint);
+  if (existing >= 0) pushSubscriptions.splice(existing, 1);
+  pushSubscriptions.push({
+    subscription: subscription as webpush.PushSubscription,
+    createdAt: new Date().toISOString(),
+  });
+  res.json({ ok: true });
+});
+
+app.post("/api/push-unsubscribe", (req: Request, res: Response) => {
+  const endpoint = req.body?.endpoint;
+  if (!endpoint) {
+    res.status(400).json({ error: "endpoint required." });
+    return;
+  }
+  const i = pushSubscriptions.findIndex((s) => s.subscription.endpoint === endpoint);
+  if (i >= 0) pushSubscriptions.splice(i, 1);
+  res.json({ ok: true });
+});
+
+async function sendDailyPushNotifications(): Promise<void> {
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE || pushSubscriptions.length === 0) return;
+  const payload = JSON.stringify({
+    title: "Paper Story",
+    body: "Your daily research digest is ready.",
+    url: APP_URL,
+  });
+  const toRemove: string[] = [];
+  for (const { subscription } of pushSubscriptions) {
+    try {
+      await webpush.sendNotification(subscription, payload);
+    } catch (err: any) {
+      if (err.statusCode === 410 || err.statusCode === 404) toRemove.push(subscription.endpoint);
+    }
+  }
+  for (const ep of toRemove) {
+    const i = pushSubscriptions.findIndex((s) => s.subscription.endpoint === ep);
+    if (i >= 0) pushSubscriptions.splice(i, 1);
+  }
+}
+
+// Daily at 8:00 AM (server time); override with CRON_SCHEDULE e.g. "0 8 * * *"
+const cronSchedule = process.env.CRON_SCHEDULE || "0 8 * * *";
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  cron.schedule(cronSchedule, () => {
+    sendDailyPushNotifications().catch((e) => console.error("Daily push failed:", e));
+  });
+  console.log(`Daily push notifications scheduled: ${cronSchedule}`);
+}
 
 app.post("/mcp", async (req: Request, res: Response) => {
   const server = new McpServer({

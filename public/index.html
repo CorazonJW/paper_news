@@ -505,6 +505,8 @@
       .settings-panel label { margin-top: 10px; }
       .settings-panel label:first-of-type { margin-top: 0; }
       .settings-panel select { margin-top: 4px; max-width: 100%; }
+      .notifications-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      .push-status { font-size: 0.8rem; color: var(--muted); }
     </style>
   </head>
   <body>
@@ -567,6 +569,11 @@
               <option value="18">18px</option>
               <option value="20">20px</option>
             </select>
+            <label>Daily notifications</label>
+            <div class="notifications-row">
+              <button type="button" class="settings-toggle" id="push-enable-btn">Enable daily notifications</button>
+              <span id="push-status" class="push-status"></span>
+            </div>
           </div>
         </div>
         <div id="left-config" class="hidden">
@@ -736,6 +743,8 @@
       const settingsPanel = document.getElementById("settings-panel");
       const uiTheme = document.getElementById("ui-theme");
       const uiFontSize = document.getElementById("ui-font-size");
+      const pushEnableBtn = document.getElementById("push-enable-btn");
+      const pushStatus = document.getElementById("push-status");
 
       const UI_PREFS_KEY = "paperStoryUI";
       const DEFAULT_UI = { colorScheme: "bw", fontSize: 16 };
@@ -790,6 +799,52 @@
           prefs.fontSize = parseInt(uiFontSize.value, 10) || 16;
           localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs));
           applyUIPrefs(prefs);
+        });
+      }
+
+      function urlBase64ToUint8Array(base64) {
+        const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+        const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const raw = atob(b64);
+        const out = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+        return out;
+      }
+
+      if (pushEnableBtn) {
+        pushEnableBtn.addEventListener("click", async () => {
+          if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+            if (pushStatus) pushStatus.textContent = "Not supported in this browser.";
+            return;
+          }
+          if (pushStatus) pushStatus.textContent = "…";
+          try {
+            const perm = await Notification.requestPermission();
+            if (perm !== "granted") {
+              if (pushStatus) pushStatus.textContent = "Permission denied.";
+              return;
+            }
+            const reg = await navigator.serviceWorker.ready;
+            const res = await fetch("/api/push-vapid-public");
+            if (!res.ok) {
+              if (pushStatus) pushStatus.textContent = "Server not configured for push.";
+              return;
+            }
+            const { publicKey } = await res.json();
+            const sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicKey),
+            });
+            await fetch("/api/push-subscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ subscription: sub.toJSON() }),
+            });
+            if (pushStatus) pushStatus.textContent = "Daily notifications enabled.";
+            if (pushEnableBtn) pushEnableBtn.textContent = "Notifications enabled";
+          } catch (e) {
+            if (pushStatus) pushStatus.textContent = "Failed: " + (e.message || "try again");
+          }
         });
       }
 

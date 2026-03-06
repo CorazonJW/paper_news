@@ -73,6 +73,23 @@ To open Paper Story on your phone like an app **without running anything on your
 
 **Note:** On Render’s free tier, the app may “spin down” after 15 minutes of no use; the first open after that can take 30–60 seconds to wake up. Paid plans keep it always on.
 
+**Daily push notifications (optional)**  
+To have the app send a daily “Your digest is ready” notification to users who opted in:
+
+1. Generate VAPID keys (one-time) on your machine:
+   ```bash
+   node -e "const w=require('web-push'); const k=w.generateVAPIDKeys(); console.log('VAPID_PUBLIC_KEY='+k.publicKey); console.log('VAPID_PRIVATE_KEY='+k.privateKey);"
+   ```
+   Copy the **public** and **private** values into Render’s environment.
+
+2. In Render → your service → **Environment**, add:
+   - `VAPID_PUBLIC_KEY` = the **public** key
+   - `VAPID_PRIVATE_KEY` = the **private** key
+   - (Optional) `APP_URL` = your app URL (e.g. `https://paper-story-xxxx.onrender.com`). If unset, Render’s URL is used when available.
+   - (Optional) `CRON_SCHEDULE` = when to send (default `0 8 * * *` = 8:00 AM daily). Format: cron expression.
+
+3. Redeploy. Users open the app → **Appearance** → **Enable daily notifications** and allow when prompted. They will get one push per day at the scheduled time (e.g. 8 AM server time).
+
 ---
 
 ### Install on your phone (with your laptop running – tunnel)

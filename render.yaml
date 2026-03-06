@@ -1,0 +1,12 @@
+# Render.com one-click deploy (free tier).
+# After deploy, open the URL on your phone and use Share → Add to Home Screen.
+services:
+  - type: web
+    name: paper-story
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Optional: add OPENAI_API_KEY in Render dashboard for real summaries & Q&A

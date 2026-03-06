@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Paper Story – Daily Research Digest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#6b7280" id="meta-theme-color" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Paper Story" />
+    <link rel="manifest" href="/manifest.json" />
+    <style>
+      /* Default: NYT-style – off-white, soft black, muted greys */
+      :root,
+      [data-theme="bw"] {
+        color-scheme: light;
+        --bg: #f6f6f4;
+        --bg-elevated: #eeeeeb;
+        --card: #fafaf8;
+        --border: #e2e2de;
+        --accent: #363636;
+        --accent-soft: rgba(0, 0, 0, 0.06);
+        --text: #121212;
+        --muted: #6b6b6b;
+        --danger: #a52a2a;
+        --input-bg: #ffffff;
+        --panel-extra: rgba(250, 250, 248, 0.8);
+      }
+
+      [data-theme="grey"] {
+        color-scheme: light;
+        --bg: #f2f2f0;
+        --bg-elevated: #e8e8e6;
+        --card: #fafaf9;
+        --border: #d0d0cc;
+        --accent: #5c5c5c;
+        --accent-soft: rgba(0, 0, 0, 0.06);
+        --text: #2d2d2d;
+        --muted: #6e6e6e;
+        --danger: #a52a2a;
+        --input-bg: #ffffff;
+        --panel-extra: rgba(255, 255, 255, 0.6);
+      }
+
+      [data-theme="pink"] {
+        color-scheme: light;
+        --bg: #faf5f6;
+        --bg-elevated: #f3ebed;
+        --card: #fdfafa;
+        --border: #e8d8dc;
+        --accent: #8b6b6f;
+        --accent-soft: rgba(139, 107, 111, 0.1);
+        --text: #3d2c2e;
+        --muted: #7a6568;
+        --danger: #a52a2a;
+        --input-bg: #ffffff;
+        --panel-extra: rgba(255, 255, 255, 0.7);
+      }
+
+      [data-theme="purple"] {
+        color-scheme: light;
+        --bg: #f5f4f8;
+        --bg-elevated: #ebe9f0;
+        --card: #faf9fc;
+        --border: #ddd9e4;
+        --accent: #5e5a6d;
+        --accent-soft: rgba(94, 90, 109, 0.1);
+        --text: #2d2a35;
+        --muted: #6b6776;
+        --danger: #a52a2a;
+        --input-bg: #ffffff;
+        --panel-extra: rgba(255, 255, 255, 0.7);
+      }
+
+      [data-theme="blue"] {
+        color-scheme: light;
+        --bg: #f4f6f8;
+        --bg-elevated: #e8ecf0;
+        --card: #fafbfc;
+        --border: #d4dae0;
+        --accent: #4a5c6a;
+        --accent-soft: rgba(74, 92, 106, 0.1);
+        --text: #2c3540;
+        --muted: #5c6b78;
+        --danger: #a52a2a;
+        --input-bg: #ffffff;
+        --panel-extra: rgba(255, 255, 255, 0.7);
+      }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #1a1d23;
+        --bg-elevated: #12141a;
+        --card: #1e2128;
+        --border: #2d323c;
+        --accent: #94a3b0;
+        --accent-soft: rgba(148, 163, 176, 0.12);
+        --text: #d4d8dc;
+        --muted: #9ca3af;
+        --danger: #d87373;
+        --input-bg: rgba(30, 33, 40, 0.95);
+        --panel-extra: rgba(30, 33, 40, 0.95);
+      }
+
+      html { font-size: 16px; }
+      html[data-font-size="14"] { font-size: 14px; }
+      html[data-font-size="16"] { font-size: 16px; }
+      html[data-font-size="18"] { font-size: 18px; }
+      html[data-font-size="20"] { font-size: 20px; }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Georgia", "Times New Roman", serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      [data-theme="dark"] body {
+        background: radial-gradient(circle at top left, #0f172a, #020617 60%);
+      }
+
+      .app {
+        width: 100%;
+        max-width: 1060px;
+        display: grid;
+        grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+        gap: 24px;
+        padding-bottom: 72px;
+      }
+
+      @media (max-width: 800px) {
+        .app {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      .panel {
+        background: linear-gradient(145deg, var(--card), var(--panel-extra));
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        padding: 20px 22px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+      }
+      [data-theme="dark"] .panel { box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9); }
+
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 4px;
+        letter-spacing: 0.02em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .field {
+        margin-bottom: 16px;
+      }
+
+      select,
+      input[type="text"] {
+        width: 100%;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--input-bg);
+        color: var(--text);
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        outline: none;
+      }
+
+      select:focus,
+      input[type="text"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent-soft);
+      }
+
+      .multi-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .pill {
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        padding: 5px 10px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        cursor: pointer;
+        background: var(--input-bg);
+      }
+
+      .pill.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: #e0f2fe;
+      }
+
+      .radio-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .radio-card {
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        background: var(--input-bg);
+      }
+
+      .radio-card.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .radio-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+
+      .radio-caption {
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+
+      .field-note {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 6px;
+        line-height: 1.35;
+      }
+
+      button.primary {
+        margin-top: 10px;
+        width: 100%;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #0ea5e9, #22c55e);
+        color: #0b1120;
+        font-weight: 600;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      button.primary:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      .status {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        min-height: 1em;
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .hidden { display: none !important; }
+      .report-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+      .refresh-btn { padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 0.9rem; cursor: pointer; }
+      .refresh-btn:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+      .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .report-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .report-meta {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .chip {
+        font-size: 0.75rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        padding: 3px 9px;
+        color: var(--muted);
+      }
+
+      .papers-list {
+        max-height: 420px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .paper-card {
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        padding: 10px 11px;
+        margin-bottom: 10px;
+        background: var(--card);
+      }
+
+      .paper-title {
+        font-size: 0.88rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .paper-meta {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .paper-abstract {
+        font-size: 0.8rem;
+        color: #d1d5db;
+      }
+
+      .paper-link {
+        font-size: 0.76rem;
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      .focus-paper-banner {
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--accent);
+        background: var(--accent-soft);
+        font-size: 0.85rem;
+      }
+      .focus-label {
+        color: var(--muted);
+        margin-right: 6px;
+      }
+      .focus-paper-link {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .focus-paper-link:hover {
+        text-decoration: underline;
+      }
+      .section-heading {
+        font-size: 0.9rem;
+        margin: 0 0 8px;
+        color: var(--accent);
+      }
+
+      .summary-section,
+      .report-section {
+        margin-bottom: 16px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--card);
+      }
+
+      .summary-text {
+        font-size: 0.8rem;
+        color: #d1d5db;
+        white-space: pre-wrap;
+        margin: 0;
+        font-family: inherit;
+      }
+
+      .report-text {
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        line-height: 1.5;
+      }
+
+      .empty-state {
+        margin-top: 24px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .onboarding {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .onboarding.hidden { display: none; }
+      .onboarding-card {
+        max-width: 420px;
+        width: 100%;
+        padding: 28px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: var(--card);
+      }
+      .onboarding-card h1 { margin-bottom: 8px; }
+      .onboarding-card .subtitle { margin-bottom: 20px; }
+      .onboarding-card textarea {
+        width: 100%;
+        min-height: 80px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--input-bg);
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+      .report-card {
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        margin-bottom: 16px;
+      }
+      .report-card .card-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+      .report-card .card-meta { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+      .report-card .card-authors { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+      .report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+      .report-card .block { margin-bottom: 12px; }
+      .report-card .block-label { font-size: 0.75rem; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+      .report-card .block-content { font-size: 0.85rem; line-height: 1.5; }
+      .report-card .block-content ul { margin: 4px 0 0 1em; padding: 0; }
+      .related-list { margin-top: 8px; }
+      .related-list a { color: var(--accent); font-size: 0.85rem; display: block; margin-bottom: 6px; }
+      .trend-section, .qa-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+      .trend-section .report-text,
+      .report-text { color: var(--text); }
+      .qa-input-row { display: flex; gap: 8px; margin-top: 8px; }
+      .qa-input-row input { flex: 1; border-radius: 10px; padding: 8px 12px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); }
+      .qa-answer { margin-top: 12px; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; }
+      .qa-answer a { color: var(--accent); }
+
+      .bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        font-size: 0.85rem;
+        z-index: 100;
+      }
+      .bar-back { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.85rem; cursor: pointer; }
+      .bar-back:hover { color: var(--accent); border-color: var(--accent); }
+
+      .settings-block { margin-bottom: 16px; }
+      .settings-toggle {
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .settings-toggle:hover { color: var(--text); border-color: var(--text); }
+      .settings-panel { margin-top: 10px; }
+      .settings-panel label { margin-top: 10px; }
+      .settings-panel label:first-of-type { margin-top: 0; }
+      .settings-panel select { margin-top: 4px; max-width: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="onboarding" class="onboarding">
+      <div class="onboarding-card">
+        <h1>Paper Story</h1>
+        <p class="subtitle">Set your preferences to get a daily research digest.</p>
+        <div class="field">
+          <label>Interested field(s)</label>
+          <textarea id="onboard-fields" placeholder="e.g. machine learning, AI, biology (one per line or comma-separated)"></textarea>
+        </div>
+        <div class="field">
+          <label>Desired complexity</label>
+          <select id="onboard-complexity">
+            <option value="before_high_school">Before high school (storytelling)</option>
+            <option value="high_school">High school</option>
+            <option value="undergraduate">Undergraduate</option>
+            <option value="master">Master</option>
+            <option value="doctor">PhD</option>
+            <option value="above_doctor">Above doctor</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Preferred language</label>
+          <select id="onboard-language">
+            <option value="en">English</option>
+            <option value="zh">Chinese</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+          </select>
+        </div>
+        <button class="primary" id="onboard-submit">Get my digest</button>
+      </div>
+    </div>
+    <main class="app" id="main-app">
+      <section class="panel left-panel">
+        <h1>Paper Story</h1>
+        <div class="subtitle">
+          A daily research digest tuned to your interests and level.
+        </div>
+        <div class="settings-block">
+          <button type="button" class="settings-toggle" id="settings-toggle" aria-expanded="false">Appearance</button>
+          <div id="settings-panel" class="settings-panel hidden">
+            <label>Color scheme</label>
+            <select id="ui-theme">
+              <option value="bw">Black & white</option>
+              <option value="grey">Grey</option>
+              <option value="pink">Pink</option>
+              <option value="purple">Purple</option>
+              <option value="blue">Blue</option>
+              <option value="dark">Dark</option>
+            </select>
+            <label>Font size</label>
+            <select id="ui-font-size">
+              <option value="14">14px</option>
+              <option value="16" selected>16px</option>
+              <option value="18">18px</option>
+              <option value="20">20px</option>
+            </select>
+          </div>
+        </div>
+        <div id="left-config" class="hidden">
+          <div class="field">
+            <label>Fields of study</label>
+            <p class="field-note">Same papers for everyone; used for search only.</p>
+            <div class="multi-pill-row" id="field-pills">
+              <button class="pill" data-field="ai">AI</button>
+              <button class="pill" data-field="ml">Machine Learning</button>
+              <button class="pill" data-field="physics">Physics</button>
+              <button class="pill" data-field="math">Mathematics</button>
+            </div>
+            <input
+              type="text"
+              id="custom-field-input"
+              placeholder="Add another field (press Enter)…"
+              autocomplete="off"
+            />
+          </div>
+          <div class="field">
+            <label>Education level</label>
+            <p class="field-note">Search and summary are the same for all. This only changes how your daily report is written (e.g. storytelling vs. technical).</p>
+            <div class="radio-row" id="level-cards">
+              <button class="radio-card" data-level="before_high_school">
+                <span class="radio-label">Before high school</span>
+                <span class="radio-caption">Report style: storytelling, characters, concrete</span>
+              </button>
+              <button class="radio-card" data-level="high_school">
+                <span class="radio-label">High school</span>
+                <span class="radio-caption">Report style: light technical, analogies</span>
+              </button>
+              <button class="radio-card" data-level="undergraduate">
+                <span class="radio-label">Undergraduate</span>
+                <span class="radio-caption">Report style: standard science explainer</span>
+              </button>
+              <button class="radio-card" data-level="master">
+                <span class="radio-label">Master</span>
+                <span class="radio-caption">Report style: more math & detail</span>
+              </button>
+              <button class="radio-card" data-level="doctor">
+                <span class="radio-label">PhD</span>
+                <span class="radio-caption">Report style: research-level</span>
+              </button>
+              <button class="radio-card" data-level="above_doctor">
+                <span class="radio-label">Above doctor</span>
+                <span class="radio-caption">Report style: assume deep expertise</span>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Language</label>
+            <select id="language-select">
+              <option value="en">English</option>
+              <option value="zh">Chinese</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="ja">Japanese</option>
+              <option value="ko">Korean</option>
+            </select>
+          </div>
+          <button class="primary" id="generate-btn">Generate today’s papers</button>
+        </div>
+        <div class="status" id="status"></div>
+      </section>
+
+      <section class="panel">
+        <div class="report-header">
+          <div class="report-title-row">
+            <span class="report-title">Today’s research feed</span>
+            <div class="report-actions">
+              <button type="button" class="refresh-btn" id="change-paper-btn" title="Show another paper from this feed">Change paper</button>
+              <button type="button" class="refresh-btn" id="refresh-btn" title="Refresh papers and report">Refresh</button>
+            </div>
+          </div>
+          <div class="report-meta" id="report-meta"></div>
+        </div>
+        <div class="chips-row" id="chips-row"></div>
+        <div id="daily-report-card" class="report-card" style="display: none;">
+          <div class="card-title" id="card-title"></div>
+          <div class="card-meta" id="card-meta"></div>
+          <div class="card-authors" id="card-authors"></div>
+          <div id="card-structured">
+            <div class="block" id="block-summary"><div class="block-label">Summary</div><div class="block-content" id="block-summary-content"></div></div>
+            <div class="block" id="block-keypoints"><div class="block-label">Key points</div><div class="block-content" id="block-keypoints-content"></div></div>
+            <div class="block" id="block-dataset"><div class="block-label">Dataset</div><div class="block-content" id="block-dataset-content"></div></div>
+            <div class="block" id="block-methods"><div class="block-label">Methods</div><div class="block-content" id="block-methods-content"></div></div>
+          </div>
+          <a id="card-paper-link" href="#" target="_blank" rel="noopener noreferrer" class="paper-link">Open paper ↗</a>
+        </div>
+        <div id="summary-section" class="summary-section" style="display: none;">
+          <h3 class="section-heading" id="summary-heading">Summary & key points</h3>
+          <pre id="summary-text" class="summary-text"></pre>
+        </div>
+        <div id="report-section" class="report-section" style="display: none;">
+          <h3 class="section-heading" id="report-heading">Daily report for your level</h3>
+          <div id="report-text" class="report-text"></div>
+        </div>
+        <div id="related-papers-section" class="trend-section" style="display: none;">
+          <h3 class="section-heading">Related papers</h3>
+          <div id="related-papers-list" class="related-list"></div>
+        </div>
+        <div id="trend-section" class="trend-section" style="display: none;">
+          <h3 class="section-heading">Trend in your field (last month)</h3>
+          <div id="trend-content" class="report-text"></div>
+        </div>
+        <div id="qa-section" class="qa-section" style="display: none;">
+          <h3 class="section-heading">Ask about the report</h3>
+          <div class="qa-input-row">
+            <input type="text" id="qa-input" placeholder="Ask a question…" />
+            <button class="primary" id="qa-submit" style="width: auto;">Ask</button>
+          </div>
+          <div id="qa-answer" class="qa-answer"></div>
+        </div>
+        <div id="papers-container" class="papers-list"></div>
+        <div class="empty-state" id="empty-state">
+          Your digest will appear here. Use <strong>Refresh</strong> to load papers.
+        </div>
+      </section>
+    </main>
+
+    <nav id="bottom-bar" class="bottom-bar hidden" aria-label="Settings">
+      <button type="button" class="bar-back" id="bar-back-to-init">Back to setup</button>
+    </nav>
+
+    <script>
+      const fieldPills = document.getElementById("field-pills");
+      const customFieldInput = document.getElementById("custom-field-input");
+      const levelCards = document.getElementById("level-cards");
+      const languageSelect = document.getElementById("language-select");
+      const generateBtn = document.getElementById("generate-btn");
+      const statusEl = document.getElementById("status");
+      const chipsRow = document.getElementById("chips-row");
+      const papersContainer = document.getElementById("papers-container");
+      const emptyState = document.getElementById("empty-state");
+      const reportMeta = document.getElementById("report-meta");
+      const summarySection = document.getElementById("summary-section");
+      const summaryText = document.getElementById("summary-text");
+      const reportSection = document.getElementById("report-section");
+      const reportText = document.getElementById("report-text");
+      const summaryHeading = document.getElementById("summary-heading");
+      const reportHeading = document.getElementById("report-heading");
+      const focusPaperBanner = document.getElementById("focus-paper-banner");
+      const focusPaperLink = document.getElementById("focus-paper-link");
+      const dailyReportCard = document.getElementById("daily-report-card");
+      const cardTitle = document.getElementById("card-title");
+      const cardMeta = document.getElementById("card-meta");
+      const cardAuthors = document.getElementById("card-authors");
+      const blockSummaryContent = document.getElementById("block-summary-content");
+      const blockKeypointsContent = document.getElementById("block-keypoints-content");
+      const blockDatasetContent = document.getElementById("block-dataset-content");
+      const blockMethodsContent = document.getElementById("block-methods-content");
+      const cardPaperLink = document.getElementById("card-paper-link");
+      const relatedPapersSection = document.getElementById("related-papers-section");
+      const relatedPapersList = document.getElementById("related-papers-list");
+      const trendSectionEl = document.getElementById("trend-section");
+      const trendContent = document.getElementById("trend-content");
+      const qaSection = document.getElementById("qa-section");
+      const qaInput = document.getElementById("qa-input");
+      const qaSubmit = document.getElementById("qa-submit");
+      const qaAnswer = document.getElementById("qa-answer");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const bottomBar = document.getElementById("bottom-bar");
+      const changePaperBtn = document.getElementById("change-paper-btn");
+      const barBackToInit = document.getElementById("bar-back-to-init");
+      const settingsToggle = document.getElementById("settings-toggle");
+      const settingsPanel = document.getElementById("settings-panel");
+      const uiTheme = document.getElementById("ui-theme");
+      const uiFontSize = document.getElementById("ui-font-size");
+
+      const UI_PREFS_KEY = "paperStoryUI";
+      const DEFAULT_UI = { colorScheme: "bw", fontSize: 16 };
+
+      function getUIPrefs() {
+        try {
+          const raw = localStorage.getItem(UI_PREFS_KEY);
+          if (!raw) return null;
+          const p = JSON.parse(raw);
+          if (p && (p.colorScheme || p.fontSize != null)) return p;
+        } catch (_) {}
+        return null;
+      }
+
+      const THEME_COLORS = { bw: "#6b6b6b", grey: "#5c5c5c", pink: "#8b6b6f", purple: "#5e5a6d", blue: "#4a5c6a", dark: "#2d323c" };
+
+      function applyUIPrefs(prefs) {
+        const p = prefs || DEFAULT_UI;
+        const scheme = ["bw", "grey", "pink", "purple", "blue", "dark"].includes(p.colorScheme) ? p.colorScheme : "bw";
+        const root = document.documentElement;
+        root.dataset.theme = scheme;
+        root.dataset.fontSize = String(p.fontSize || 16);
+        if (uiTheme) uiTheme.value = scheme;
+        if (uiFontSize) uiFontSize.value = String(p.fontSize || 16);
+        var meta = document.getElementById("meta-theme-color");
+        if (meta) meta.setAttribute("content", THEME_COLORS[scheme] || THEME_COLORS.bw);
+      }
+
+      if (typeof localStorage !== "undefined") {
+        const uiPrefs = getUIPrefs();
+        applyUIPrefs(uiPrefs || DEFAULT_UI);
+      }
+
+      if (settingsToggle && settingsPanel) {
+        settingsToggle.addEventListener("click", () => {
+          const isHidden = settingsPanel.classList.contains("hidden");
+          settingsPanel.classList.toggle("hidden", !isHidden);
+          settingsToggle.setAttribute("aria-expanded", String(!isHidden));
+        });
+      }
+      if (uiTheme) {
+        uiTheme.addEventListener("change", () => {
+          const prefs = getUIPrefs() || DEFAULT_UI;
+          prefs.colorScheme = uiTheme.value;
+          localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs));
+          applyUIPrefs(prefs);
+        });
+      }
+      if (uiFontSize) {
+        uiFontSize.addEventListener("change", () => {
+          const prefs = getUIPrefs() || DEFAULT_UI;
+          prefs.fontSize = parseInt(uiFontSize.value, 10) || 16;
+          localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs));
+          applyUIPrefs(prefs);
+        });
+      }
+
+      let selectedFields = new Set();
+      let selectedLevel = null;
+      let lastPayload = null;
+      let currentFocusIndex = 0;
+      let lastRelatedPapers = [];
+
+      function escapeHtml(s) {
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function applyPreferences(prefs) {
+        if (prefs.fieldsOfStudy && Array.isArray(prefs.fieldsOfStudy)) {
+          selectedFields = new Set(prefs.fieldsOfStudy);
+          fieldPills.querySelectorAll(".pill").forEach((p) => p.classList.toggle("active", selectedFields.has(p.dataset.field)));
+        }
+        if (prefs.educationLevel) {
+          selectedLevel = prefs.educationLevel;
+          levelCards.querySelectorAll(".radio-card").forEach((c) => c.classList.toggle("active", c.dataset.level === selectedLevel));
+        }
+        if (prefs.language) languageSelect.value = prefs.language;
+      }
+
+      function getSavedPrefs() {
+        try {
+          const raw = localStorage.getItem("paperStoryPreferences");
+          if (!raw) return null;
+          const prefs = JSON.parse(raw);
+          if (prefs && Array.isArray(prefs.fieldsOfStudy) && prefs.fieldsOfStudy.length) return prefs;
+        } catch (_) {}
+        return null;
+      }
+
+      if (typeof localStorage !== "undefined") {
+        const prefs = getSavedPrefs();
+        if (prefs) {
+          applyPreferences(prefs);
+          document.getElementById("onboarding").classList.add("hidden");
+          if (bottomBar) bottomBar.classList.remove("hidden");
+          doGenerate();
+        }
+      }
+
+      refreshBtn.addEventListener("click", () => doGenerate());
+
+      if (changePaperBtn) {
+        changePaperBtn.addEventListener("click", async () => {
+          if (!lastPayload || !lastPayload.papers || lastPayload.papers.length < 2) return;
+          currentFocusIndex = (currentFocusIndex + 1) % lastPayload.papers.length;
+          const paper = lastPayload.papers[currentFocusIndex];
+          if (changePaperBtn) changePaperBtn.disabled = true;
+          setStatus("Loading summary for another paper…");
+          try {
+            const res = await fetch("/ui/summarize-one", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                paper,
+                educationLevel: lastPayload.educationLevel || "undergraduate",
+                language: lastPayload.language || "en",
+              }),
+            });
+            if (!res.ok) throw new Error("Request failed");
+            const data = await res.json();
+            const merged = {
+              ...lastPayload,
+              focusPaper: data.focusPaper || paper,
+              structuredSummary: data.structuredSummary,
+              summary: data.summary,
+              report: data.report,
+              summarySource: data.summarySource || "mock",
+              reportSource: data.reportSource || "mock",
+            };
+            lastPayload = merged;
+            renderPapers(merged);
+            setStatus("");
+          } catch (e) {
+            setStatus("Could not load another paper. Try again.", true);
+          } finally {
+            if (changePaperBtn) changePaperBtn.disabled = false;
+          }
+        });
+      }
+
+      function prefillOnboardingFromPrefs() {
+        const prefs = getSavedPrefs();
+        if (!prefs) return;
+        const fieldsEl = document.getElementById("onboard-fields");
+        const complexityEl = document.getElementById("onboard-complexity");
+        const languageEl = document.getElementById("onboard-language");
+        if (fieldsEl && Array.isArray(prefs.fieldsOfStudy)) fieldsEl.value = prefs.fieldsOfStudy.join(", ");
+        if (complexityEl && prefs.educationLevel) complexityEl.value = prefs.educationLevel;
+        if (languageEl && prefs.language) languageEl.value = prefs.language;
+      }
+
+      if (barBackToInit) {
+        barBackToInit.addEventListener("click", () => {
+          prefillOnboardingFromPrefs();
+          document.getElementById("onboarding").classList.remove("hidden");
+          if (bottomBar) bottomBar.classList.add("hidden");
+        });
+      }
+
+      document.getElementById("onboard-submit").addEventListener("click", () => {
+        const btn = document.getElementById("onboard-submit");
+        const raw = document.getElementById("onboard-fields").value.trim();
+        const fields = raw ? raw.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean) : ["ai"];
+        const prefs = {
+          fieldsOfStudy: fields,
+          educationLevel: document.getElementById("onboard-complexity").value,
+          language: document.getElementById("onboard-language").value,
+        };
+        localStorage.setItem("paperStoryPreferences", JSON.stringify(prefs));
+        applyPreferences(prefs);
+        document.getElementById("onboarding").classList.add("hidden");
+        if (bottomBar) bottomBar.classList.remove("hidden");
+        if (btn) { btn.disabled = true; btn.textContent = "Loading…"; }
+        doGenerate().finally(() => { if (btn) { btn.disabled = false; btn.textContent = "Get my digest"; } });
+      });
+
+      fieldPills.addEventListener("click", (e) => {
+        if (!(e.target instanceof HTMLElement)) return;
+        const pill = e.target.closest(".pill");
+        if (!pill) return;
+        const f = pill.dataset.field;
+        if (!f) return;
+        if (selectedFields.has(f)) {
+          selectedFields.delete(f);
+          pill.classList.remove("active");
+        } else {
+          selectedFields.add(f);
+          pill.classList.add("active");
+        }
+      });
+
+      customFieldInput.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const value = customFieldInput.value.trim();
+        if (!value) return;
+        if (!selectedFields.has(value)) {
+          selectedFields.add(value);
+          const pill = document.createElement("button");
+          pill.className = "pill active";
+          pill.dataset.field = value;
+          pill.textContent = value;
+          fieldPills.appendChild(pill);
+        }
+        customFieldInput.value = "";
+      });
+
+      levelCards.addEventListener("click", (e) => {
+        if (!(e.target instanceof HTMLElement)) return;
+        const card = e.target.closest(".radio-card");
+        if (!card) return;
+        const level = card.dataset.level;
+        if (!level) return;
+        selectedLevel = level;
+        for (const c of levelCards.querySelectorAll(".radio-card")) {
+          c.classList.toggle("active", c === card);
+        }
+      });
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message || "";
+        statusEl.classList.toggle("error", isError);
+      }
+
+      async function doGenerate() {
+        const prefs = getSavedPrefs();
+        if (!prefs || !prefs.fieldsOfStudy.length) {
+          setStatus("Set your interests in onboarding first.", true);
+          return;
+        }
+        setStatus("Fetching papers and generating report…");
+        if (refreshBtn) refreshBtn.disabled = true;
+        try {
+          const res = await fetch("/ui/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fieldsOfStudy: prefs.fieldsOfStudy,
+              educationLevel: prefs.educationLevel || "undergraduate",
+              language: prefs.language || "en",
+              maxResults: 12,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `HTTP ${res.status}`);
+          }
+          const data = await res.json();
+          renderPapers(data);
+          setStatus("");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to fetch papers. Try again or check the server.", true);
+        } finally {
+          if (refreshBtn) refreshBtn.disabled = false;
+        }
+      }
+
+      function renderPapers(payload) {
+        lastPayload = payload;
+        lastRelatedPapers = [];
+        papersContainer.innerHTML = "";
+        chipsRow.innerHTML = "";
+        const { fieldsOfStudy, educationLevel, language, generatedAt, papers, focusPaper, structuredSummary, summary, report, summarySource, reportSource } =
+          payload;
+
+        if (fieldsOfStudy?.length) {
+          fieldsOfStudy.forEach((f) => {
+            const chip = document.createElement("div");
+            chip.className = "chip";
+            chip.textContent = f;
+            chipsRow.appendChild(chip);
+          });
+        }
+
+        if (educationLevel) {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.textContent = educationLevel.replace(/_/g, " ");
+          chipsRow.appendChild(chip);
+        }
+
+        if (language) {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.textContent = language.toUpperCase();
+          chipsRow.appendChild(chip);
+        }
+
+        reportMeta.textContent = generatedAt
+          ? new Date(generatedAt).toLocaleString()
+          : "";
+
+        if (!papers || papers.length === 0) {
+          emptyState.textContent =
+            "No papers found in the last week for this combination. Try different fields.";
+          emptyState.style.display = "block";
+          if (summarySection) summarySection.style.display = "none";
+          if (reportSection) reportSection.style.display = "none";
+          if (focusPaperBanner) focusPaperBanner.style.display = "none";
+          return;
+        }
+
+        emptyState.style.display = "none";
+
+        if (focusPaper && focusPaperBanner && focusPaperLink) {
+          focusPaperBanner.style.display = "block";
+          focusPaperLink.textContent = focusPaper.title || "Selected paper";
+          focusPaperLink.href = focusPaper.url || focusPaper.id || "#";
+        } else if (focusPaperBanner) {
+          focusPaperBanner.style.display = "none";
+        }
+
+        const hasStructured = structuredSummary && focusPaper;
+        if (payload.papers && payload.papers.length && focusPaper) {
+          const idx = payload.papers.findIndex((p) => (p.id || p.url) === (focusPaper.id || focusPaper.url));
+          currentFocusIndex = idx >= 0 ? idx : 0;
+        }
+        if (hasStructured && dailyReportCard) {
+          dailyReportCard.style.display = "block";
+          cardTitle.textContent = focusPaper.title || "";
+          const dateStr = focusPaper.publishedAt ? new Date(focusPaper.publishedAt).toLocaleDateString() : "";
+          const journalStr = focusPaper.journal || (focusPaper.source === "journal" ? "Journal" : "arXiv");
+          if (cardMeta) cardMeta.textContent = [dateStr, journalStr].filter(Boolean).join(" · ");
+          cardAuthors.textContent = (focusPaper.authors && focusPaper.authors.length) ? focusPaper.authors.join(", ") : "";
+          blockSummaryContent.textContent = structuredSummary.summary || "";
+          blockKeypointsContent.innerHTML = Array.isArray(structuredSummary.keyPoints)
+            ? "<ul><li>" + structuredSummary.keyPoints.map((k) => escapeHtml(String(k))).join("</li><li>") + "</li></ul>"
+            : escapeHtml(String(structuredSummary.keyPoints || ""));
+          const datasetText = structuredSummary.dataset || "";
+          if (structuredSummary.datasetUrl) {
+            blockDatasetContent.innerHTML = escapeHtml(datasetText) + ' <a href="' + escapeHtml(structuredSummary.datasetUrl) + '" target="_blank" rel="noopener noreferrer">Link</a>';
+          } else {
+            blockDatasetContent.textContent = datasetText;
+          }
+          blockMethodsContent.textContent = structuredSummary.methods || "";
+          cardPaperLink.href = focusPaper.url || focusPaper.id || "#";
+          cardPaperLink.style.display = "inline-block";
+          if (summarySection) summarySection.style.display = "none";
+          if (reportSection) reportSection.style.display = "none";
+          if (changePaperBtn) changePaperBtn.style.display = (papers && papers.length > 1) ? "inline-block" : "none";
+        } else {
+          if (dailyReportCard) dailyReportCard.style.display = "none";
+          if (changePaperBtn) changePaperBtn.style.display = "none";
+          if (summary && summarySection && summaryText) {
+            summaryText.textContent = summary;
+            summarySection.style.display = "block";
+            if (summaryHeading) summaryHeading.textContent = summarySource === "llm" ? "Summary & key points" : "Summary & key points (demo)";
+          } else if (summarySection) summarySection.style.display = "none";
+          if (report && reportSection && reportText) {
+            reportText.textContent = report;
+            reportSection.style.display = "block";
+            if (reportHeading) reportHeading.textContent = reportSource === "llm" ? "Daily report for your level" : "Daily report (demo)";
+          } else if (reportSection) reportSection.style.display = "none";
+        }
+
+        if (qaSection) qaSection.style.display = (summary || report || hasStructured) ? "block" : "none";
+        qaAnswer.innerHTML = "";
+
+        if (fieldsOfStudy?.length) {
+          const fieldsParam = fieldsOfStudy.join(",");
+          fetch("/ui/related-papers?fields=" + encodeURIComponent(fieldsParam) + "&limit=5")
+            .then((r) => r.ok ? r.json() : null)
+            .then((data) => {
+              if (!data?.papers?.length) return;
+              lastRelatedPapers = data.papers;
+              relatedPapersSection.style.display = "block";
+              relatedPapersList.innerHTML = data.papers.map((p) =>
+                '<a class="related-link" href="' + escapeHtml(p.url || p.id || "#") + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(p.title || "Untitled") + "</a>"
+              ).join("");
+            })
+            .catch(() => {});
+          fetch("/ui/trend", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fieldsOfStudy, language: language || "en" }),
+          })
+            .then((r) => r.ok ? r.json() : null)
+            .then((data) => {
+              if (!data?.trend) return;
+              trendSectionEl.style.display = "block";
+              trendContent.textContent = data.trend;
+            })
+            .catch(() => {});
+        } else {
+          relatedPapersSection.style.display = "none";
+          trendSectionEl.style.display = "none";
+        }
+
+        papers.forEach((p) => {
+          const card = document.createElement("article");
+          card.className = "paper-card";
+
+          const title = document.createElement("div");
+          title.className = "paper-title";
+          title.textContent = p.title || "Untitled";
+
+          const meta = document.createElement("div");
+          meta.className = "paper-meta";
+          const source = p.source === "journal" ? p.journal || "Journal" : "arXiv";
+          const date = p.publishedAt
+            ? new Date(p.publishedAt).toLocaleDateString()
+            : "";
+          meta.textContent = [source, date].filter(Boolean).join(" • ");
+
+          const abs = document.createElement("div");
+          abs.className = "paper-abstract";
+          abs.textContent = p.abstract
+            ? p.abstract.slice(0, 280) + (p.abstract.length > 280 ? "…" : "")
+            : "No abstract.";
+
+          const link = document.createElement("a");
+          link.className = "paper-link";
+          link.href = p.url || p.id || "#";
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Open paper ↗";
+
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.appendChild(abs);
+          card.appendChild(link);
+          papersContainer.appendChild(card);
+        });
+      }
+
+      generateBtn.addEventListener("click", () => doGenerate());
+
+      qaSubmit.addEventListener("click", async () => {
+        const question = qaInput?.value?.trim();
+        if (!question) return;
+        if (!lastPayload) {
+          qaAnswer.innerHTML = "<p>Generate a report first, then ask questions.</p>";
+          return;
+        }
+        const reportContext = [
+          lastPayload.summary,
+          lastPayload.report,
+          lastPayload.structuredSummary && [
+            lastPayload.structuredSummary.summary,
+            (lastPayload.structuredSummary.keyPoints || []).join(" "),
+            lastPayload.structuredSummary.dataset,
+            lastPayload.structuredSummary.methods,
+          ].filter(Boolean).join(" "),
+        ].filter(Boolean).join("\n\n");
+        const relatedPapersContext = lastRelatedPapers.length
+          ? "Related papers:\n" + lastRelatedPapers.map((p) => (p.title || "Untitled") + (p.abstract ? "\n  " + (p.abstract || "").slice(0, 300) + "…" : "")).join("\n\n")
+          : "";
+        qaAnswer.innerHTML = "<p>Thinking…</p>";
+        try {
+          const res = await fetch("/ui/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reportContext, relatedPapersContext, question }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.answer) {
+            let html = escapeHtml(data.answer).replace(/\n/g, "<br>");
+            html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            qaAnswer.innerHTML = html;
+          } else {
+            qaAnswer.innerHTML = "<p>Could not get an answer. Make sure the server has OPENAI_API_KEY set for Q&A.</p>";
+          }
+        } catch (e) {
+          qaAnswer.innerHTML = "<p>Request failed. Try again.</p>";
+        }
+      });
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+    </script>
+  </body>
+</html>
+

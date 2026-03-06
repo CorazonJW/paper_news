@@ -1,0 +1,25 @@
+{
+  "name": "paper-summary-mcp-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An MCP-based backend for a multi-user, multi-language paper summary and reporting app.",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test:mcp": "node scripts/test-mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^4.21.0",
+    "zod": "^3.23.8",
+    "undici": "^6.19.8",
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}
